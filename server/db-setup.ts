@@ -91,13 +91,28 @@ async function main() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
-
-      -- Add foreign key constraint for custom_domains.vendor_id
-      ALTER TABLE custom_domains 
-      ADD CONSTRAINT fk_custom_domains_vendor 
-      FOREIGN KEY (vendor_id) 
-      REFERENCES vendors(id);
     `);
+
+    // Try to add the foreign key constraint if it doesn't exist
+    try {
+      await db.execute(sql`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.table_constraints 
+            WHERE constraint_name = 'fk_custom_domains_vendor'
+          ) THEN
+            ALTER TABLE custom_domains 
+            ADD CONSTRAINT fk_custom_domains_vendor 
+            FOREIGN KEY (vendor_id) 
+            REFERENCES vendors(id);
+          END IF;
+        END $$;
+      `);
+    } catch (error) {
+      console.log('Note: Foreign key constraint already exists or could not be added');
+    }
     
     console.log('Migrations completed successfully');
   } catch (error) {
