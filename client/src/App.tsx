@@ -1,4 +1,4 @@
-import { Route, Switch, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -32,128 +32,112 @@ const logRoute = (path: string, component: string) => {
 };
 
 export function Router() {
-  const { user, isLoading, error } = useAuth();
-  const [location] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
 
-  // Debug logging for auth state
+  // Handle redirection based on user role after authentication
+  // This useEffect will run when isAuthenticated or user changes
   useEffect(() => {
-    console.log('[Router] Auth state:', { 
-      isAuthenticated: !!user, 
-      userRole: user?.role,
-      currentPath: location,
-      isLoading,
-      error 
-    });
-  }, [user, location, isLoading, error]);
+    if (!isLoading) {
+      if (isAuthenticated) {
+        // User is authenticated, redirect to appropriate dashboard if they are on a public route like '/'
+        if (location === '/' || location === '/login') {
+          if (user?.role === 'super_admin') {
+            setLocation('/admin');
+          } else if (user?.role === 'seller') {
+            setLocation('/seller');
+          } else if (user?.role === 'buyer') {
+            setLocation('/buyer');
+          }
+        }
+      } else {
+        // User is not authenticated, redirect to login if they are on a protected route
+        // This part might be less critical now as protected routes are conditionally rendered
+        // but keeping it for robustness.
+        if (location !== '/' && location !== '/login' && !location.startsWith('/store')) {
+             // Example: if they somehow land on /buyer when not logged in, send them to login
+             // Be careful with this - ensure all public routes are explicitly handled above.
+             // For now, let's rely on the conditional rendering below to handle this.
+        }
+      }
+    }
+  }, [isAuthenticated, isLoading, user, setLocation, location]);
 
-  // Show loading state only briefly
+  // Show loading state while determining auth status
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // Handle auth error
-  if (error) {
-    console.log('[Router] Auth error:', error);
-    return (
-      <Switch>
-        <Route path="/" component={Login} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Login} />
-        <Route path="/store/:domain?" component={Storefront} />
-        <Route component={NotFound} />
-      </Switch>
-    );
-  }
-
-  // Public routes (no auth required)
-  if (!user) {
-    console.log('[Router] User not authenticated, showing public routes');
-    return (
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Login} />
-        <Route path="/store/:domain?" component={Storefront} />
-        <Route component={NotFound} />
-      </Switch>
-    );
-  }
-
-  // Protected routes (auth required)
-  console.log('[Router] User authenticated, showing protected routes for role:', user.role);
+  // Once loading is false, render routes based on authentication status
   return (
     <Switch>
-      {/* Dashboard routes based on user role */}
-      <Route path="/dashboard" component={() => {
-        logRoute('/dashboard', `${user.role}Dashboard`);
-        switch (user.role) {
-          case 'super_admin':
-            return <SuperAdminDashboard />;
-          case 'seller':
-            return <SellerDashboard />;
-          case 'buyer':
-            return <BuyerDashboard />;
-          default:
-            console.error('[Router] Unknown user role:', user.role);
-            return <NotFound />;
-        }
-      }} />
-
-      {/* Admin routes */}
-      {user.role === 'super_admin' && (
-        <>
-          <Route path="/admin/users" component={AdminUsers} />
-          <Route path="/admin/vendors" component={AdminVendors} />
-          <Route path="/admin/domains" component={AdminDomains} />
-          <Route path="/admin/categories" component={AdminCategories} />
-          <Route path="/admin/orders" component={AdminOrders} />
-          <Route path="/admin/products" component={AdminProducts} />
-          <Route path="/admin/analytics" component={AdminAnalytics} />
-          <Route path="/admin/billing" component={AdminBilling} />
-          <Route path="/admin/security" component={AdminSecurity} />
-          <Route path="/admin/system" component={AdminSystem} />
-          <Route path="/admin/settings" component={AdminSettings} />
-        </>
-      )}
-
-      {/* Seller routes */}
-      {user.role === 'seller' && (
-        <>
-          <Route path="/seller" component={SellerDashboard} />
-          <Route path="/seller/categories" component={SellerCategories} />
-          <Route path="/seller/products" component={SellerDashboard} />
-          <Route path="/seller/orders" component={SellerDashboard} />
-          <Route path="/seller/analytics" component={SellerDashboard} />
-          <Route path="/seller/settings" component={SellerDashboard} />
-        </>
-      )}
-
-      {/* Buyer routes */}
-      {user.role === 'buyer' && (
-        <>
-          <Route path="/buyer" component={BuyerDashboard} />
-          <Route path="/buyer/cart" component={Cart} />
-          <Route path="/buyer/orders" component={BuyerDashboard} />
-          <Route path="/buyer/profile" component={BuyerDashboard} />
-        </>
-      )}
-
-      {/* Public routes that are still accessible when authenticated */}
+      {/* Public Routes - accessible to everyone */}
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
       <Route path="/store/:domain?" component={Storefront} />
 
-      {/* Redirect root to dashboard if authenticated */}
-      <Route path="/" component={() => {
-        logRoute('/', 'RedirectToDashboard');
-        window.location.href = '/dashboard';
-        return null;
-      }} />
+      {/* Authenticated Routes - only accessible if isAuthenticated is true */}
+      {isAuthenticated ? (
+        <>
+          {/* Admin routes */}
+          {user?.role === 'super_admin' && (
+            <>
+              <Route path="/admin" component={SuperAdminDashboard} />
+              <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/vendors" component={AdminVendors} />
+              <Route path="/admin/domains" component={AdminDomains} />
+              <Route path="/admin/categories" component={AdminCategories} />
+              <Route path="/admin/products" component={AdminProducts} />
+              <Route path="/admin/orders" component={AdminOrders} />
+              <Route path="/admin/analytics" component={AdminAnalytics} />
+              <Route path="/admin/billing" component={AdminBilling} />
+              <Route path="/admin/security" component={AdminSecurity} />
+              <Route path="/admin/system" component={AdminSystem} />
+              <Route path="/admin/settings" component={AdminSettings} />
+            </>
+          )}
+          
+          {/* Seller routes */}
+          {user?.role === 'seller' && (
+            <>
+              <Route path="/seller" component={SellerDashboard} />
+              <Route path="/seller/categories" component={SellerCategories} />
+              <Route path="/seller/products" component={SellerDashboard} />
+              <Route path="/seller/orders" component={SellerDashboard} />
+              <Route path="/seller/analytics" component={SellerDashboard} />
+              <Route path="/seller/settings" component={SellerDashboard} />
+            </>
+          )}
+          
+          {/* Buyer routes */}
+          {user?.role === 'buyer' && (
+             <>
+               <Route path="/buyer" component={BuyerDashboard} />
+               <Route path="/buyer/cart" component={Cart} />
+               {/* Add other buyer specific routes here */} 
+             </>
+          )}
 
-      {/* Catch-all route */}
-      <Route component={NotFound} />
+          {/* Fallback for authenticated users on roots or unassigned roles - redirects to / */} {/* This should ideally not be hit if the useEffect works */} {/* <Route path="/" component={Landing} /> */}
+          
+        </>
+      ) : (
+        {/* Optional: Redirect any attempt to access protected routes when unauthenticated to login */}
+        {/* This is handled by the isAuthenticated check on the routes themselves, but adding a catch-all redirect for belt-and-suspenders */}
+         <Route path="/admin/:rest*" component={() => { setLocation('/login'); return null; }} />
+         <Route path="/seller/:rest*" component={() => { setLocation('/login'); return null; }} />
+         <Route path="/buyer/:rest*" component={() => { setLocation('/login'); return null; }} />
+      )}
+
+      {/* Catch all other routes (handles non-existent paths for both auth states) */}
+      <Route path="*" component={NotFound} />
     </Switch>
   );
 }
