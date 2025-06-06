@@ -1,0 +1,13 @@
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  productId Int
+  quantity  Int      @default(1)
+  size      String
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId, size, color])
+} 
