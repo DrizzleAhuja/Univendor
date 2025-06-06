@@ -8,12 +8,20 @@ import cors from "cors";
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  
+  // Parse the DATABASE_URL to add SSL parameters
+  const connectionString = process.env.DATABASE_URL.includes('?') 
+    ? `${process.env.DATABASE_URL}&sslmode=require`
+    : `${process.env.DATABASE_URL}?sslmode=require`;
+
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    conString: connectionString,
     createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: {
+      rejectUnauthorized: false
+    }
   });
   
   return session({
