@@ -36,7 +36,7 @@ export function getSession() {
       maxAge: sessionTtl,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+      domain: process.env.NODE_ENV === 'production' ? 'univendor.onrender.com' : undefined
     },
   });
 }

@@ -127,10 +127,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // User exists, log them in
         console.log('Login successful for user:', existingUser.id);
         (req.session as any).userId = existingUser.id;
-        res.json({ 
-          message: "Login successful", 
-          user: existingUser,
-          requiresRegistration: false 
+        req.session.save(() => {
+          res.json({ 
+            message: "Login successful", 
+            user: existingUser,
+            requiresRegistration: false 
+          });
         });
       } else {
         // New user, needs registration
@@ -169,8 +171,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log user in
       (req.session as any).userId = user.id;
-      
-      res.json({ message: "Registration successful", user });
+      req.session.save(() => {
+        res.json({ message: "Registration successful", user });
+      });
     } catch (error) {
       console.error("Error registering user:", error);
       res.status(500).json({ message: "Failed to register user" });
