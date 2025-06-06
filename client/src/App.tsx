@@ -129,11 +129,13 @@ export function Router() {
           
         </>
       ) : (
-        {/* Optional: Redirect any attempt to access protected routes when unauthenticated to login */}
-        {/* This is handled by the isAuthenticated check on the routes themselves, but adding a catch-all redirect for belt-and-suspenders */}
-         <Route path="/admin/:rest*" component={() => { setLocation('/login'); return null; }} />
-         <Route path="/seller/:rest*" component={() => { setLocation('/login'); return null; }} />
-         <Route path="/buyer/:rest*" component={() => { setLocation('/login'); return null; }} />
+        <>
+          {/* Optional: Redirect any attempt to access protected routes when unauthenticated to login */}
+          {/* This is handled by the isAuthenticated check on the routes themselves, but adding a catch-all redirect for belt-and-suspenders */}
+           <Route path="/admin/:rest*" component={() => { setLocation('/login'); return null; }} />
+           <Route path="/seller/:rest*" component={() => { setLocation('/login'); return null; }} />
+           <Route path="/buyer/:rest*" component={() => { setLocation('/login'); return null; }} />
+        </>
       )}
 
       {/* Catch all other routes (handles non-existent paths for both auth states) */}
