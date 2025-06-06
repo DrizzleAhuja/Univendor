@@ -10,7 +10,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit push:pg",
-    "postinstall": "node -e \"require('dotenv').config(); const { Pool } = require('pg'); const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); pool.query('SELECT NOW()', (err) => { if (err) { console.error('Database connection failed:', err); process.exit(1); } console.log('Database connection successful'); process.exit(0); });\" && npx drizzle-kit push:pg"
+    "db:setup": "tsx server/db-setup.ts",
+    "postinstall": "npm run db:setup"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
