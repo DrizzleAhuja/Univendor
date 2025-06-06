@@ -38,7 +38,8 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={() => {
+          <Route path="/" component={Landing} />
+          <Route path="/dashboard" component={() => {
             if (user?.role === 'super_admin') return <SuperAdminDashboard />;
             if (user?.role === 'seller') return <SellerDashboard />;
             return <BuyerDashboard />;
@@ -63,7 +64,6 @@ function Router() {
           <Route path="/seller/settings" component={SellerDashboard} />
           <Route path="/buyer" component={BuyerDashboard} />
           <Route path="/buyer/cart" component={Cart} />
-          <Route path="/store/:domain?" component={Storefront} />
         </>
       )}
       <Route component={NotFound} />

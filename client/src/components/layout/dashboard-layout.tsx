@@ -88,7 +88,8 @@ function AppSidebar({ isCollapsed, onToggleCollapse }: AppSidebarProps) {
     if (!user) return [];
 
     const commonItems = [
-      { icon: Home, label: "Dashboard", href: "/" },
+      { icon: Home, label: "Home", href: "/" },
+      { icon: Home, label: "Dashboard", href: "/dashboard" },
     ];
 
     switch ((user as any)?.role) {
