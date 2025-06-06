@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Navigate } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,20 +30,28 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {isLoading ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      ) : !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/store/:domain?" component={Storefront} />
+          <Route path="*" component={NotFound} />
         </>
       ) : (
         <>
-          <Route path="/" component={Landing} />
-          <Route path="/dashboard" component={() => {
-            if (user?.role === 'super_admin') return <SuperAdminDashboard />;
-            if (user?.role === 'seller') return <SellerDashboard />;
-            return <BuyerDashboard />;
+          <Route path="/" component={() => {
+            if (user?.role === 'super_admin') return <Navigate to="/admin" />;
+            if (user?.role === 'seller') return <Navigate to="/seller" />;
+            return <Navigate to="/buyer" />;
           }} />
+          
           <Route path="/admin" component={SuperAdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/vendors" component={AdminVendors} />
@@ -56,17 +64,21 @@ function Router() {
           <Route path="/admin/security" component={AdminSecurity} />
           <Route path="/admin/system" component={AdminSystem} />
           <Route path="/admin/settings" component={AdminSettings} />
+          
           <Route path="/seller" component={SellerDashboard} />
           <Route path="/seller/categories" component={SellerCategories} />
           <Route path="/seller/products" component={SellerDashboard} />
           <Route path="/seller/orders" component={SellerDashboard} />
           <Route path="/seller/analytics" component={SellerDashboard} />
           <Route path="/seller/settings" component={SellerDashboard} />
+          
           <Route path="/buyer" component={BuyerDashboard} />
           <Route path="/buyer/cart" component={Cart} />
+          <Route path="/store/:domain?" component={Storefront} />
+          
+          <Route path="*" component={NotFound} />
         </>
       )}
-      <Route component={NotFound} />
     </Switch>
   );
 }
