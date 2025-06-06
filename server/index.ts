@@ -13,14 +13,20 @@ app.use(express.urlencoded({ extended: false }));
 
 // CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? [process.env.CLIENT_URL].filter(Boolean)
+  ? ['https://univendor.onrender.com', 'https://www.univendor.onrender.com']  // Add your Render URL here
   : ['http://localhost:5173', 'http://localhost:5000'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
