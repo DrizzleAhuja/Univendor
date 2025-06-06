@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,47 +24,26 @@ import AdminSystem from "@/pages/admin/system";
 import AdminSettings from "@/pages/admin/settings";
 import SellerCategories from "@/pages/seller/categories";
 import Cart from "@/pages/buyer/cart";
-import { useEffect } from "react";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
-
-  // Handle redirection based on user role
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      if (user?.role === 'super_admin') {
-        setLocation('/admin');
-      } else if (user?.role === 'seller') {
-        setLocation('/seller');
-      } else if (user?.role === 'buyer') {
-        setLocation('/buyer');
-      }
-    }
-  }, [isAuthenticated, isLoading, user, setLocation]);
 
   return (
     <Switch>
-      {isLoading ? (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      ) : !isAuthenticated ? (
+      {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/store/:domain?" component={Storefront} />
-          <Route path="*" component={NotFound} />
         </>
       ) : (
         <>
-          {/* Root route shows landing page for authenticated users */}
           <Route path="/" component={Landing} />
-          
-          {/* Admin routes */}
+          <Route path="/dashboard" component={() => {
+            if (user?.role === 'super_admin') return <SuperAdminDashboard />;
+            if (user?.role === 'seller') return <SellerDashboard />;
+            return <BuyerDashboard />;
+          }} />
           <Route path="/admin" component={SuperAdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/vendors" component={AdminVendors} />
@@ -77,24 +56,18 @@ function Router() {
           <Route path="/admin/security" component={AdminSecurity} />
           <Route path="/admin/system" component={AdminSystem} />
           <Route path="/admin/settings" component={AdminSettings} />
-          
-          {/* Seller routes */}
           <Route path="/seller" component={SellerDashboard} />
           <Route path="/seller/categories" component={SellerCategories} />
           <Route path="/seller/products" component={SellerDashboard} />
           <Route path="/seller/orders" component={SellerDashboard} />
           <Route path="/seller/analytics" component={SellerDashboard} />
           <Route path="/seller/settings" component={SellerDashboard} />
-          
-          {/* Buyer routes */}
           <Route path="/buyer" component={BuyerDashboard} />
           <Route path="/buyer/cart" component={Cart} />
           <Route path="/store/:domain?" component={Storefront} />
-          
-          {/* Catch all other routes */}
-          <Route path="*" component={NotFound} />
         </>
       )}
+      <Route component={NotFound} />
     </Switch>
   );
 }

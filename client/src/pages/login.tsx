@@ -93,7 +93,7 @@ export default function Login() {
           description: "Welcome back!",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        setLocation("/");
+        setLocation("/dashboard");
       }
     },
     onError: (error) => {
@@ -116,7 +116,7 @@ export default function Login() {
         description: "Welcome to the platform!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/");
+      setLocation("/dashboard");
     },
     onError: (error) => {
       toast({
