@@ -11,8 +11,13 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       userId: req.session?.userId,
     });
 
+    // Add logging for cookie header and session ID
+    console.log('Incoming Cookie header:', req.headers.cookie);
+    console.log('Session ID (req.sessionID):', req.sessionID);
+
     // First check if we already have user data from a previous middleware
     if ((req as any).user?.claims?.sub) {
+      console.log('User data found from previous middleware.');
       return next();
     }
 
