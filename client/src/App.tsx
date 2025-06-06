@@ -32,7 +32,7 @@ const logRoute = (path: string, component: string) => {
 };
 
 export function Router() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
   const [location] = useLocation();
 
   // Debug logging for auth state
@@ -41,13 +41,32 @@ export function Router() {
       isAuthenticated: !!user, 
       userRole: user?.role,
       currentPath: location,
-      isLoading 
+      isLoading,
+      error 
     });
-  }, [user, location, isLoading]);
+  }, [user, location, isLoading, error]);
 
+  // Show loading state only briefly
   if (isLoading) {
-    console.log('[Router] Loading auth state...');
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // Handle auth error
+  if (error) {
+    console.log('[Router] Auth error:', error);
+    return (
+      <Switch>
+        <Route path="/" component={Login} />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Login} />
+        <Route path="/store/:domain?" component={Storefront} />
+        <Route component={NotFound} />
+      </Switch>
+    );
   }
 
   // Public routes (no auth required)
@@ -55,18 +74,11 @@ export function Router() {
     console.log('[Router] User not authenticated, showing public routes');
     return (
       <Switch>
-        <Route path="/" component={() => {
-          logRoute('/', 'Login');
-          return <Login />;
-        }} />
-        <Route path="/register" component={() => {
-          logRoute('/register', 'Register');
-          return <Login />;
-        }} />
-        <Route component={() => {
-          logRoute('*', 'NotFound');
-          return <NotFound />;
-        }} />
+        <Route path="/" component={Landing} />
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Login} />
+        <Route path="/store/:domain?" component={Storefront} />
+        <Route component={NotFound} />
       </Switch>
     );
   }
@@ -94,44 +106,44 @@ export function Router() {
       {/* Admin routes */}
       {user.role === 'super_admin' && (
         <>
-          <Route path="/admin/users" component={() => {
-            logRoute('/admin/users', 'AdminUsers');
-            return <AdminUsers />;
-          }} />
-          <Route path="/admin/settings" component={() => {
-            logRoute('/admin/settings', 'AdminSettings');
-            return <AdminSettings />;
-          }} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/vendors" component={AdminVendors} />
+          <Route path="/admin/domains" component={AdminDomains} />
+          <Route path="/admin/categories" component={AdminCategories} />
+          <Route path="/admin/orders" component={AdminOrders} />
+          <Route path="/admin/products" component={AdminProducts} />
+          <Route path="/admin/analytics" component={AdminAnalytics} />
+          <Route path="/admin/billing" component={AdminBilling} />
+          <Route path="/admin/security" component={AdminSecurity} />
+          <Route path="/admin/system" component={AdminSystem} />
+          <Route path="/admin/settings" component={AdminSettings} />
         </>
       )}
 
       {/* Seller routes */}
       {user.role === 'seller' && (
         <>
-          <Route path="/seller/products" component={() => {
-            logRoute('/seller/products', 'SellerProducts');
-            return <SellerDashboard />;
-          }} />
-          <Route path="/seller/orders" component={() => {
-            logRoute('/seller/orders', 'SellerOrders');
-            return <SellerDashboard />;
-          }} />
+          <Route path="/seller" component={SellerDashboard} />
+          <Route path="/seller/categories" component={SellerCategories} />
+          <Route path="/seller/products" component={SellerDashboard} />
+          <Route path="/seller/orders" component={SellerDashboard} />
+          <Route path="/seller/analytics" component={SellerDashboard} />
+          <Route path="/seller/settings" component={SellerDashboard} />
         </>
       )}
 
       {/* Buyer routes */}
       {user.role === 'buyer' && (
         <>
-          <Route path="/buyer/orders" component={() => {
-            logRoute('/buyer/orders', 'BuyerOrders');
-            return <BuyerDashboard />;
-          }} />
-          <Route path="/buyer/profile" component={() => {
-            logRoute('/buyer/profile', 'BuyerProfile');
-            return <BuyerDashboard />;
-          }} />
+          <Route path="/buyer" component={BuyerDashboard} />
+          <Route path="/buyer/cart" component={Cart} />
+          <Route path="/buyer/orders" component={BuyerDashboard} />
+          <Route path="/buyer/profile" component={BuyerDashboard} />
         </>
       )}
+
+      {/* Public routes that are still accessible when authenticated */}
+      <Route path="/store/:domain?" component={Storefront} />
 
       {/* Redirect root to dashboard if authenticated */}
       <Route path="/" component={() => {
@@ -141,10 +153,7 @@ export function Router() {
       }} />
 
       {/* Catch-all route */}
-      <Route component={() => {
-        logRoute('*', 'NotFound');
-        return <NotFound />;
-      }} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
