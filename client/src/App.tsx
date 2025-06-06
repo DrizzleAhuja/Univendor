@@ -28,13 +28,19 @@ import Cart from "@/pages/buyer/cart";
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  // Show nothing while loading
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
+      {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/store/:domain?" component={Storefront} />
+          <Route path="*" component={NotFound} />
         </>
       ) : (
         <>
